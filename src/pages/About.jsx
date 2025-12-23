@@ -7,7 +7,7 @@ const About = () => {
       {/* Header Section */}
       <div className="text-center text-black rounded-2xl p-10 md:p-16 shadow-xl bg-white">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          About <span className="text-pink-700">Us</span>
+          About <span className="text-yellow-700">Us</span>
         </h1>
         <p className="text-base md:text-2xl max-w-3xl mx-auto text-gray-700">
           Welcome to our store! We are passionate about providing the best
