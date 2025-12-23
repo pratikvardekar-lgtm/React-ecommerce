@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Contact = () => {
+  // Initialize state from localStorage if available
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
+  useEffect(() => {
+    const savedData = localStorage.getItem('contactForm');
+    if (savedData) {
+      setFormData(JSON.parse(savedData));
+    }
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const updatedForm = { ...formData, [name]: value };
+    setFormData(updatedForm);
+    localStorage.setItem('contactForm', JSON.stringify(updatedForm));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert('Message sent successfully!');
+    // Optionally clear localStorage after submission
+    localStorage.removeItem('contactForm');
+    setFormData({ name: '', email: '', message: '' });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-10 py-20 space-y-16 bg-gray-50 mt-20">
-
+      
       {/* Header Section */}
       <div className="text-center mb-10">
         <h1 className="text-5xl font-bold text-gray-800 mb-4">Contact Us</h1>
@@ -30,15 +59,19 @@ const Contact = () => {
 
       {/* Contact Form and Map Section */}
       <div className="grid md:grid-cols-2 gap-12 items-start">
+        
         {/* Contact Form */}
         <div className="bg-white p-8 rounded-2xl shadow-lg">
           <h2 className="text-3xl font-semibold text-gray-800 mb-6">Send Us a Message</h2>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-gray-700 mb-2">Name</label>
               <input
                 type="text"
+                name="name"
                 placeholder="Your Name"
+                value={formData.name}
+                onChange={handleChange}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -46,15 +79,21 @@ const Contact = () => {
               <label className="block text-gray-700 mb-2">Email</label>
               <input
                 type="email"
+                name="email"
                 placeholder="Your Email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
               <label className="block text-gray-700 mb-2">Message</label>
               <textarea
+                name="message"
                 rows="5"
                 placeholder="Your Message"
+                value={formData.message}
+                onChange={handleChange}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -80,7 +119,6 @@ const Contact = () => {
           />
         </div>
       </div>
-
     </div>
   );
 };
