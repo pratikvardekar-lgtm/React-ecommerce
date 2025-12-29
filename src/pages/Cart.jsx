@@ -1,36 +1,98 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { LuNotebookText } from "react-icons/lu";
 import { GiShoppingBag } from "react-icons/gi";
 import { FiMinus, FiPlus } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
-  const {cartItems, removeFromCart, increaseQty, decreaseQty,
+  const {
+    cartItems,
+    removeFromCart,
+    increaseQty,
+    decreaseQty,
+    clearCart,
   } = useCart();
 
-  // ✅ Total Price with quantity
+  const navigate = useNavigate();
+
+  // ---------------- Delivery State ----------------
+  const [delivery, setDelivery] = useState({
+    name: "",
+    address: "",
+    state: "",
+    postcode: "",
+    country: "",
+    phone: "",
+  });
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Load from localStorage on component mount
+  useEffect(() => {
+    const saved = localStorage.getItem("deliveryInfo");
+    if (saved) {
+      const parsedData = JSON.parse(saved);
+      setDelivery(parsedData);
+      setIsSubmitted(true);
+    }
+  }, []);
+
+  // Total Price
   const totalPrice = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
 
-    // ✅ Checkout Handler
+  // Handle Input
+  const handleChange = (e) => {
+    setDelivery({ ...delivery, [e.target.name]: e.target.value });
+  };
+
+  // Submit Delivery
+  const handleDeliverySubmit = () => {
+    const { name, address, state, postcode, country, phone } = delivery;
+
+    if (!name || !address || !state || !postcode || !country || !phone) {
+      toast.error("Please fill all delivery details!");
+      return;
+    }
+
+    localStorage.setItem("deliveryInfo", JSON.stringify(delivery));
+    setIsSubmitted(true);
+    toast.success("Delivery details saved!");
+  };
+
+  // Edit Delivery (if user wants to modify saved info)
+  const handleEditDelivery = () => {
+    setIsSubmitted(false);
+    toast.info("You can now edit delivery details");
+  };
+
+  // Checkout
   const handleCheckout = () => {
+    // Check if delivery info is already saved from localStorage
+    const savedDelivery = localStorage.getItem("deliveryInfo");
+    const hasSavedDelivery = savedDelivery && JSON.parse(savedDelivery);
+
+    // If delivery is not submitted AND no saved delivery in localStorage
+    if (!isSubmitted && !hasSavedDelivery) {
+      toast.error("Please fill delivery details first!");
+      return;
+    }
+
     if (cartItems.length === 0) {
       toast.error("Your cart is empty!");
       return;
     }
 
-    // Show success message
     toast.success("🎉 Order placed successfully!");
 
-    // Clear cart
     clearCart();
+    localStorage.removeItem("deliveryInfo");
 
-    // Redirect to order success page
     setTimeout(() => {
       navigate("/order-success");
     }, 1500);
@@ -43,64 +105,49 @@ const Cart = () => {
           🛒 Your cart is empty
         </div>
       ) : (
-        <div>
+        <>
           <h1 className="font-bold text-3xl mb-5">
             My Cart ({cartItems.length})
           </h1>
 
           {/* Cart Items */}
-          <div className="mt-6 space-y-4">
+          <div className="space-y-4">
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-gray-100 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between p-4 shadow-sm gap-4"
+                className="bg-gray-100 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between p-4 gap-4"
               >
                 <div className="flex items-center gap-4">
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-20 h-20 rounded-md object-contain bg-white p-2"
+                    className="w-20 h-20 object-contain bg-white p-2"
                   />
-
                   <div>
-                    <h1 className="w-[260px] md:w-[350px] line-clamp-2 font-medium">
+                    <h1 className="font-medium line-clamp-2">
                       {item.title}
                     </h1>
-
-                    <p className="text-red-500 font-semibold text-lg mt-1">
+                    <p className="text-red-500 font-semibold">
                       ₹{item.price * item.quantity}
                     </p>
                   </div>
                 </div>
 
-                {/* Quantity Controls */}
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => decreaseQty(item.id)}
-                    className="p-2 bg-gray-300 rounded-full hover:bg-gray-400"
-                  >
+                  <button onClick={() => decreaseQty(item.id)} className="p-2 bg-gray-300 rounded-full">
                     <FiMinus />
                   </button>
-
-                  <span className="font-semibold text-lg">
-                    {item.quantity}
-                  </span>
-
-                  <button
-                    onClick={() => increaseQty(item.id)}
-                    className="p-2 bg-gray-300 rounded-full hover:bg-gray-400"
-                  >
+                  <span className="font-semibold">{item.quantity}</span>
+                  <button onClick={() => increaseQty(item.id)} className="p-2 bg-gray-300 rounded-full">
                     <FiPlus />
                   </button>
                 </div>
 
-                {/* Remove */}
                 <button
                   onClick={() => removeFromCart(item.id)}
-                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md"
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg"
                 >
                   <FaRegTrashAlt />
-                  Remove
                 </button>
               </div>
             ))}
@@ -108,48 +155,110 @@ const Cart = () => {
 
           {/* Delivery + Bill */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
-            {/* Delivery Info */}
+
+            {/* Delivery Section */}
             <div className="bg-gray-100 rounded-md p-7 space-y-4">
-              <h1 className="text-gray-800 font-bold text-xl">
-                Delivery Info
-              </h1>
-
-              <input className="p-2 rounded-md w-full font-bold" placeholder="Full Name" />
-              <input className="p-2 rounded-md w-full font-bold" placeholder="Address" />
-
-              <div className="flex gap-5">
-                <input className="p-2 rounded-md w-full font-bold" placeholder="State" />
-                <input className="p-2 rounded-md w-full font-bold" placeholder="Postcode" />
+              <div className="flex justify-between items-center">
+                <h1 className="font-bold text-xl">Delivery Info</h1>
+                {isSubmitted && (
+                  <button
+                    onClick={handleEditDelivery}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
 
-              <div className="flex gap-5">
-                <input className="p-2 rounded-md w-full font-bold" placeholder="Country" />
-                <input className="p-2 rounded-md w-full font-bold" placeholder="Phone Number" />
-              </div>
+              {!isSubmitted ? (
+                <>
+                  {/* Delivery Form - Only shown when not submitted */}
+                  <input 
+                    name="name" 
+                    value={delivery.name} 
+                    onChange={handleChange} 
+                    placeholder="Full Name" 
+                    className="input" 
+                  />
+                  <input 
+                    name="address" 
+                    value={delivery.address} 
+                    onChange={handleChange} 
+                    placeholder="Address" 
+                    className="input" 
+                  />
 
-              <button className="bg-red-500 text-white py-2 rounded-md w-full font-semibold">
-                Submit
-              </button>
+                  <div className="flex gap-4">
+                    <input 
+                      name="state" 
+                      value={delivery.state} 
+                      onChange={handleChange} 
+                      placeholder="State" 
+                      className="input" 
+                    />
+                    <input 
+                      name="postcode" 
+                      value={delivery.postcode} 
+                      onChange={handleChange} 
+                      placeholder="Postcode" 
+                      className="input" 
+                    />
+                  </div>
+
+                  <div className="flex gap-4">
+                    <input 
+                      name="country" 
+                      value={delivery.country} 
+                      onChange={handleChange} 
+                      placeholder="Country" 
+                      className="input" 
+                    />
+                    <input 
+                      name="phone" 
+                      value={delivery.phone} 
+                      onChange={handleChange} 
+                      placeholder="Phone Number" 
+                      className="input" 
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleDeliverySubmit}
+                    className="bg-red-500 text-white py-2 rounded-md w-full font-semibold"
+                  >
+                    Save Delivery Info
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Display saved delivery info */}
+                  <div className="space-y-2 bg-white p-4 rounded-md">
+                    <p><strong>Name:</strong> {delivery.name}</p>
+                    <p><strong>Address:</strong> {delivery.address}</p>
+                    <p><strong>State:</strong> {delivery.state}</p>
+                    <p><strong>Postcode:</strong> {delivery.postcode}</p>
+                    <p><strong>Country:</strong> {delivery.country}</p>
+                    <p><strong>Phone:</strong> {delivery.phone}</p>
+                  </div>
+                  <div className="bg-green-100 text-green-700 p-3 rounded-md text-center">
+                    ✓ Delivery details saved
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Bill Details */}
-            <div className="bg-white border shadow-xl rounded-md p-7 h-max space-y-3">
-              <h1 className="text-gray-800 font-bold text-xl">
-                Bill Details
-              </h1>
+            {/* Bill Section */}
+            <div className="bg-white border shadow-xl rounded-md p-7 space-y-3">
+              <h1 className="font-bold text-xl">Bill Details</h1>
 
               <div className="flex justify-between">
-                <span className="flex items-center gap-1 text-gray-700">
-                  <LuNotebookText /> Items Total
-                </span>
+                <span className="flex gap-1"><LuNotebookText /> Items Total</span>
                 <span>₹{totalPrice}</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="flex items-center gap-1 text-gray-700">
-                  <GiShoppingBag /> Handling Charge
-                </span>
-                <span className="text-red-500 font-semibold">₹5</span>
+                <span className="flex gap-1"><GiShoppingBag /> Handling</span>
+                <span>₹5</span>
               </div>
 
               <hr />
@@ -159,15 +268,15 @@ const Cart = () => {
                 <span>₹{totalPrice + 5}</span>
               </div>
 
-            <button
-              onClick={handleCheckout}
-              className="mt-6 bg-red-500 text-white py-2 rounded-md w-full font-semibold hover:bg-red-600"
-            >
-              Proceed to Checkout
-            </button>
+              <button
+                onClick={handleCheckout}
+                className="mt-6 bg-red-500 text-white py-2 rounded-md w-full font-semibold hover:bg-red-600 transition-colors"
+              >
+                Proceed to Checkout
+              </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
