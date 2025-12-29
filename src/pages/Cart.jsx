@@ -30,12 +30,11 @@ const Cart = () => {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Load from localStorage on component mount
+  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("deliveryInfo");
     if (saved) {
-      const parsedData = JSON.parse(saved);
-      setDelivery(parsedData);
+      setDelivery(JSON.parse(saved));
       setIsSubmitted(true);
     }
   }, []);
@@ -65,20 +64,9 @@ const Cart = () => {
     toast.success("Delivery details saved!");
   };
 
-  // Edit Delivery (if user wants to modify saved info)
-  const handleEditDelivery = () => {
-    setIsSubmitted(false);
-    toast.info("You can now edit delivery details");
-  };
-
   // Checkout
   const handleCheckout = () => {
-    // Check if delivery info is already saved from localStorage
-    const savedDelivery = localStorage.getItem("deliveryInfo");
-    const hasSavedDelivery = savedDelivery && JSON.parse(savedDelivery);
-
-    // If delivery is not submitted AND no saved delivery in localStorage
-    if (!isSubmitted && !hasSavedDelivery) {
+    if (!isSubmitted) {
       toast.error("Please fill delivery details first!");
       return;
     }
@@ -156,98 +144,32 @@ const Cart = () => {
           {/* Delivery + Bill */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
 
-            {/* Delivery Section */}
+            {/* Delivery */}
             <div className="bg-gray-100 rounded-md p-7 space-y-4">
-              <div className="flex justify-between items-center">
-                <h1 className="font-bold text-xl">Delivery Info</h1>
-                {isSubmitted && (
-                  <button
-                    onClick={handleEditDelivery}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Edit
-                  </button>
-                )}
+              <h1 className="font-bold text-xl">Delivery Info</h1>
+
+              <input name="name" value={delivery.name} onChange={handleChange} placeholder="Full Name" className="input" />
+              <input name="address" value={delivery.address} onChange={handleChange} placeholder="Address" className="input" />
+
+              <div className="flex gap-4">
+                <input name="state" value={delivery.state} onChange={handleChange} placeholder="State" className="input" />
+                <input name="postcode" value={delivery.postcode} onChange={handleChange} placeholder="Postcode" className="input" />
               </div>
 
-              {!isSubmitted ? (
-                <>
-                  {/* Delivery Form - Only shown when not submitted */}
-                  <input 
-                    name="name" 
-                    value={delivery.name} 
-                    onChange={handleChange} 
-                    placeholder="Full Name" 
-                    className="input" 
-                  />
-                  <input 
-                    name="address" 
-                    value={delivery.address} 
-                    onChange={handleChange} 
-                    placeholder="Address" 
-                    className="input" 
-                  />
+              <div className="flex gap-4">
+                <input name="country" value={delivery.country} onChange={handleChange} placeholder="Country" className="input" />
+                <input name="phone" value={delivery.phone} onChange={handleChange} placeholder="Phone Number" className="input" />
+              </div>
 
-                  <div className="flex gap-4">
-                    <input 
-                      name="state" 
-                      value={delivery.state} 
-                      onChange={handleChange} 
-                      placeholder="State" 
-                      className="input" 
-                    />
-                    <input 
-                      name="postcode" 
-                      value={delivery.postcode} 
-                      onChange={handleChange} 
-                      placeholder="Postcode" 
-                      className="input" 
-                    />
-                  </div>
-
-                  <div className="flex gap-4">
-                    <input 
-                      name="country" 
-                      value={delivery.country} 
-                      onChange={handleChange} 
-                      placeholder="Country" 
-                      className="input" 
-                    />
-                    <input 
-                      name="phone" 
-                      value={delivery.phone} 
-                      onChange={handleChange} 
-                      placeholder="Phone Number" 
-                      className="input" 
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleDeliverySubmit}
-                    className="bg-red-500 text-white py-2 rounded-md w-full font-semibold"
-                  >
-                    Save Delivery Info
-                  </button>
-                </>
-              ) : (
-                <>
-                  {/* Display saved delivery info */}
-                  <div className="space-y-2 bg-white p-4 rounded-md">
-                    <p><strong>Name:</strong> {delivery.name}</p>
-                    <p><strong>Address:</strong> {delivery.address}</p>
-                    <p><strong>State:</strong> {delivery.state}</p>
-                    <p><strong>Postcode:</strong> {delivery.postcode}</p>
-                    <p><strong>Country:</strong> {delivery.country}</p>
-                    <p><strong>Phone:</strong> {delivery.phone}</p>
-                  </div>
-                  <div className="bg-green-100 text-green-700 p-3 rounded-md text-center">
-                    ✓ Delivery details saved
-                  </div>
-                </>
-              )}
+              <button
+                onClick={handleDeliverySubmit}
+                className="bg-red-500 text-white py-2 rounded-md w-full font-semibold"
+              >
+                Save Delivery Info
+              </button>
             </div>
 
-            {/* Bill Section */}
+            {/* Bill */}
             <div className="bg-white border shadow-xl rounded-md p-7 space-y-3">
               <h1 className="font-bold text-xl">Bill Details</h1>
 
@@ -270,7 +192,7 @@ const Cart = () => {
 
               <button
                 onClick={handleCheckout}
-                className="mt-6 bg-red-500 text-white py-2 rounded-md w-full font-semibold hover:bg-red-600 transition-colors"
+                className="mt-6 bg-red-500 text-white py-2 rounded-md w-full font-semibold"
               >
                 Proceed to Checkout
               </button>
